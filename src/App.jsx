@@ -598,8 +598,22 @@ function App() {
 
       console.log(`[App.jsx] Generando imagen con prompt final:\n"${finalPrompt}" | Rating: ${contentRating}`);
 
-      // 5. Generate — pass contentRating so the HF service can apply the right safety mode
-      const base64Image = await HuggingFaceService.generateImage(finalPrompt, 'none', '', contentRating);
+      // 4.5. Seed determinístico: mismo personaje + mismo estilo => mismo seed,
+      // para reducir la variación aleatoria del modelo entre paneles/páginas.
+      const seedSource = `${(currentProject.characters || [])
+        .filter(c => new RegExp(`\\b${c.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i').test(editorPrompt))
+        .map(c => c.name.toLowerCase())
+        .sort()
+        .join('-')}|${editorStyle}`;
+      let seedHash = 0;
+      for (let i = 0; i < seedSource.length; i++) {
+        seedHash = (seedHash * 31 + seedSource.charCodeAt(i)) >>> 0;
+      }
+      const characterSeed = seedSource.startsWith('|') ? null : seedHash;
+
+      // 5. Generate — pass the ACTUAL selected style (was hardcoded to 'none' before,
+      // which silently always fell back to modern_shonen regardless of user selection)
+      const base64Image = await HuggingFaceService.generateImage(finalPrompt, editorStyle, '', contentRating, characterSeed);
       
       // Update the specific panel within the current page
       const updatedVolumes = currentProject.volumes.map(vol => {

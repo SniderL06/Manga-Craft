@@ -2,24 +2,33 @@
 // Equivalent to the Express server.cjs but runs as a Vercel function
 // This is the HuggingFace proxy that handles CORS-blocked calls from the browser.
 
+// Los tokens viven en variables de entorno de Vercel (HF_TOKEN_1..HF_TOKEN_10),
+// NUNCA escritos en el código fuente — así no quedan expuestos si el repo
+// es público o si alguien con acceso de lectura al repo los copia.
 const HF_TOKENS = [
-  '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',
-  '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',
-  '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',
-  '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',
-  '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',
-  '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',
-  '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',
-  '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',
-  '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',
-  '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'
-];
+  process.env.HF_TOKEN_1,
+  process.env.HF_TOKEN_2,
+  process.env.HF_TOKEN_3,
+  process.env.HF_TOKEN_4,
+  process.env.HF_TOKEN_5,
+  process.env.HF_TOKEN_6,
+  process.env.HF_TOKEN_7,
+  process.env.HF_TOKEN_8,
+  process.env.HF_TOKEN_9,
+  process.env.HF_TOKEN_10,
+].filter(Boolean); // quita los que no estén configurados
 
+// IMPORTANTE: el orden importa. FLUX.1-schnell es un modelo "guidance-distilled":
+// ignora por completo negative_prompt (no tiene CFG), por eso las burbujas de
+// diálogo se colaban sin importar qué tan bien escrito estuviera el negative
+// prompt — cuando la generación caía en schnell, ese parámetro no hacía nada.
+// Ponemos primero los modelos que SÍ respetan negative_prompt/seed, y dejamos
+// FLUX.1-schnell al final, solo como último recurso si todo lo demás falla.
 const MANGA_MODELS = [
-  { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell' },
-  { id: 'black-forest-labs/FLUX.1-dev',    label: 'FLUX.1 Dev' },
   { id: 'cagliostrolab/animagine-xl-3.1',  label: 'Animagine XL 3.1' },
   { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL Base' },
+  { id: 'black-forest-labs/FLUX.1-dev',    label: 'FLUX.1 Dev' },
+  { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell' },
 ];
 
 let tokenIndex = 0;
@@ -29,16 +38,19 @@ function nextToken() {
   return t;
 }
 
-async function tryRouterNative(token, model, prompt, negativePrompt, width, height, steps) {
+async function tryRouterNative(token, model, prompt, negativePrompt, width, height, steps, seed) {
+  const params = {
+    negative_prompt: negativePrompt || '',
+    width,
+    height,
+    num_inference_steps: steps,
+    guidance_scale: 7.0,
+  };
+  if (typeof seed === 'number' && !Number.isNaN(seed)) params.seed = seed;
+
   const payload = JSON.stringify({
     inputs: prompt,
-    parameters: {
-      negative_prompt: negativePrompt || '',
-      width,
-      height,
-      num_inference_steps: steps,
-      guidance_scale: 7.0,
-    }
+    parameters: params
   });
 
   const url = `https://router.huggingface.co/hf-inference/models/${model.id}`;
@@ -79,13 +91,17 @@ async function tryRouterNative(token, model, prompt, negativePrompt, width, heig
   return null;
 }
 
-async function tryServerless(token, model, prompt, negativePrompt, width, height, steps) {
+async function tryServerless(token, model, prompt, negativePrompt, width, height, steps, seed) {
   const isFlux = model.id.includes('FLUX') || model.id.includes('flux');
+  const hasSeed = typeof seed === 'number' && !Number.isNaN(seed);
+  const params = isFlux
+    ? { width, height, num_inference_steps: steps }
+    : { negative_prompt: negativePrompt || '', width, height, num_inference_steps: Math.max(steps, 20), guidance_scale: 7.5 };
+  if (hasSeed) params.seed = seed;
+
   const payload = JSON.stringify({
     inputs: prompt,
-    parameters: isFlux
-      ? { width, height, num_inference_steps: steps }
-      : { negative_prompt: negativePrompt || '', width, height, num_inference_steps: Math.max(steps, 20), guidance_scale: 7.5 }
+    parameters: params
   });
 
   const url = `https://api-inference.huggingface.co/models/${model.id}`;
@@ -124,8 +140,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt, negativePrompt, steps = 4, width = 768, height = 1024 } = req.body;
+  const { prompt, negativePrompt, steps = 4, width = 768, height = 1024, seed } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt requerido' });
+  if (HF_TOKENS.length === 0) {
+    return res.status(500).json({ error: 'No hay tokens de Hugging Face configurados (HF_TOKEN_1..HF_TOKEN_10 en Environment Variables de Vercel)' });
+  }
 
   const authFailed = new Set();
   let lastError = '';
@@ -136,7 +155,7 @@ export default async function handler(req, res) {
       const token = nextToken();
       if (authFailed.has(token)) continue;
       try {
-        const result = await tryRouterNative(token, model, prompt, negativePrompt, width, height, steps);
+        const result = await tryRouterNative(token, model, prompt, negativePrompt, width, height, steps, seed);
         if (result === 'AUTH_FAIL') { authFailed.add(token); continue; }
         if (result) return res.status(200).json({ image: result, model: model.label, strategy: 'router-native' });
       } catch (e) {
@@ -151,7 +170,7 @@ export default async function handler(req, res) {
       const token = nextToken();
       if (authFailed.has(token)) continue;
       try {
-        const result = await tryServerless(token, model, prompt, negativePrompt, width, height, steps);
+        const result = await tryServerless(token, model, prompt, negativePrompt, width, height, steps, seed);
         if (result) return res.status(200).json({ image: result, model: model.label, strategy: 'serverless' });
       } catch (e) {
         lastError = e.message;

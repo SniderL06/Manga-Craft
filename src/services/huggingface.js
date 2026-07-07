@@ -123,8 +123,10 @@ export const STYLE_PRESETS = {
 const PROXY_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001';
 
 // ── Pollinations.ai — fallback CORS-friendly, sin clave ──────────────────────
-async function generateWithPollinations(fullPrompt, preset, contentRating = 'general') {
-  const seed = Math.floor(Math.random() * 999999);
+async function generateWithPollinations(fullPrompt, preset, contentRating = 'general', seed = null) {
+  // Usamos el seed determinístico si viene (consistencia de personaje);
+  // si no, uno aleatorio como antes.
+  const finalSeed = (typeof seed === 'number' && !Number.isNaN(seed)) ? seed : Math.floor(Math.random() * 999999);
   const { width = 768, height = 1024, negativePrompt = '' } = preset;
 
   // Añadimos el negative prompt de manera descriptiva
@@ -135,8 +137,8 @@ async function generateWithPollinations(fullPrompt, preset, contentRating = 'gen
   const safeParam = (contentRating === 'mature' || contentRating === 'adult') ? '&safe=false' : '';
   const nsfwParam = contentRating === 'adult' ? '&nologo=true&nofeed=true' : '&nologo=true';
 
-  const url = `https://image.pollinations.ai/prompt/${encodedEnhanced}?width=${width}&height=${height}&model=flux&seed=${seed}${nsfwParam}&enhance=true${safeParam}`;
-  console.log(`[Pollinations] Generando imagen manga | Rating: ${contentRating}...`);
+  const url = `https://image.pollinations.ai/prompt/${encodedEnhanced}?width=${width}&height=${height}&model=flux&seed=${finalSeed}${nsfwParam}&enhance=true${safeParam}`;
+  console.log(`[Pollinations] Generando imagen manga | Rating: ${contentRating} | Seed: ${finalSeed}...`);
 
   const r = await fetch(url, { signal: AbortSignal.timeout(90000) });
   if (!r.ok) throw new Error(`Pollinations HTTP ${r.status}`);
@@ -153,14 +155,14 @@ async function generateWithPollinations(fullPrompt, preset, contentRating = 'gen
 }
 
 // ── Llamada al proxy Express local ────────────────────────────────────────────
-async function generateWithLocalProxy(prompt, preset, contentRating = 'general') {
+async function generateWithLocalProxy(prompt, preset, contentRating = 'general', seed = null) {
   const { negativePrompt, width = 768, height = 1024, steps = 4 } = preset;
-  console.log(`[Proxy] Enviando a Express proxy | Rating: ${contentRating}...`);
+  console.log(`[Proxy] Enviando a Express proxy | Rating: ${contentRating} | Seed: ${seed ?? 'random'}...`);
 
   const r = await fetch(`${PROXY_URL}/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, negativePrompt, width, height, steps, contentRating }),
+    body: JSON.stringify({ prompt, negativePrompt, width, height, steps, contentRating, seed }),
     signal: AbortSignal.timeout(130000)
   });
 
@@ -203,12 +205,12 @@ function applyContentRating(preset, contentRating) {
   }
 
   if (contentRating === 'adult') {
-    // Adulto (+18): remover todos los filtros de moderación del prompt
+    // Adulto (+18): remover SOLO el filtro de "watermark/signature" para permitir
+    // contenido explícito, pero MANTENER el bloqueo de speech bubbles / texto,
+    // que no tiene relación con la clasificación de contenido.
     return {
       ...preset,
-      negativePrompt: matureNegative
-        .replace('text, watermark, signature, ', 'watermark, ')
-        .replace('speech bubble, dialog box, speech bubble placeholder, dialogue bubble, text box, ', ''),
+      negativePrompt: matureNegative.replace('text, watermark, signature, ', 'watermark, signature, '),
       promptSuffix: preset.promptSuffix + ', mature adult content allowed, explicit art'
     };
   }
@@ -218,7 +220,7 @@ function applyContentRating(preset, contentRating) {
 
 // ── Servicio principal exportado ──────────────────────────────────────────────
 export const HuggingFaceService = {
-  async generateImage(userPrompt, presetKey = 'modern_shonen', panelHint = '', contentRating = 'general') {
+  async generateImage(userPrompt, presetKey = 'modern_shonen', panelHint = '', contentRating = 'general', seed = null) {
     const basePreset = STYLE_PRESETS[presetKey] || STYLE_PRESETS.modern_shonen;
     const preset = applyContentRating(basePreset, contentRating);
 
@@ -230,7 +232,7 @@ export const HuggingFaceService = {
     const proxyUp = await isProxyAvailable();
     if (proxyUp) {
       try {
-        return await generateWithLocalProxy(fullPrompt, preset, contentRating);
+        return await generateWithLocalProxy(fullPrompt, preset, contentRating, seed);
       } catch (err) {
         console.warn('[HF Service] Proxy falló, usando Pollinations:', err.message);
       }
@@ -239,7 +241,7 @@ export const HuggingFaceService = {
     }
 
     // Estrategia 2: Pollinations.ai (siempre disponible, funciona desde el navegador)
-    return await generateWithPollinations(fullPrompt, preset, contentRating);
+    return await generateWithPollinations(fullPrompt, preset, contentRating, seed);
   },
 
   async checkProxyStatus() {
