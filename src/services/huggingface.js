@@ -191,27 +191,34 @@ async function isProxyAvailable() {
 function applyContentRating(preset, contentRating) {
   if (contentRating === 'general') return preset;
 
-  // Para contenido maduro/gore: eliminar bloqueos de violencia y muerte
-  const matureNegative = preset.negativePrompt
-    .replace('blood, gore, ', '')
-    .replace('violence, ', '');
+  // Para contenido maduro/gore: eliminar absolutamente todo bloqueo de violencia, sangre o muerte
+  let adjustedNegative = preset.negativePrompt
+    .replace(/\b(blood|gore|violence|wound|injury|death|corpse|slashing|decapitation|battle damage)\b,?\s*/gi, '')
+    .trim();
+
+  // Asegurar que no queden comas sueltas al inicio/fin
+  adjustedNegative = adjustedNegative.replace(/^,\s*|,\s*$/, '').trim();
 
   if (contentRating === 'mature') {
     return {
       ...preset,
-      negativePrompt: matureNegative,
-      promptSuffix: preset.promptSuffix + ', dark manga violence allowed, blood and wounds visible'
+      negativePrompt: adjustedNegative,
+      promptSuffix: preset.promptSuffix + ', dark dramatic manga, violence and action combat allowed, detailed blood splatters, wounds visible, gritty realism'
     };
   }
 
   if (contentRating === 'adult') {
-    // Adulto (+18): remover SOLO el filtro de "watermark/signature" para permitir
-    // contenido explícito, pero MANTENER el bloqueo de speech bubbles / texto,
-    // que no tiene relación con la clasificación de contenido.
+    // Adulto (+18): remover todas las limitaciones éticas o de censura del negativePrompt
+    // y forzar términos de desinhibición de la IA
+    const adultNegative = adjustedNegative
+      .replace(/\b(nudity|nsfw|sensual|intimate|sexual|erotic|censor|censored|underwear|nude)\b,?\s*/gi, '')
+      .replace(/^,\s*|,\s*$/, '')
+      .trim();
+
     return {
       ...preset,
-      negativePrompt: matureNegative.replace('text, watermark, signature, ', 'watermark, signature, '),
-      promptSuffix: preset.promptSuffix + ', mature adult content allowed, explicit art'
+      negativePrompt: adultNegative,
+      promptSuffix: preset.promptSuffix + ', uncensored, nsfw allowed, mature theme, highly detailed anatomy, sensual illustration, erotic art style'
     };
   }
 

@@ -142,6 +142,9 @@ const SCENE_MAP = [
   ['lavando los platos|limpiando la cocina', 'washing dishes, kitchen sink, soap suds, domestic chores'],
   ['hacen la cena|haciendo la cena', 'preparing dinner together, warm home atmosphere, chopping vegetables'],
   ['abrazo familiar|abrazo de mama', 'warm family hug, parent embracing child, happy smiling faces, emotional warmth'],
+  ['tira la basura|tirando la basura|bota la basura|saca la basura|lleva la basura', 'carrying a plastic trash bag, throwing garbage into a street bin, holding garbage bag, outdoor trash disposal'],
+  ['barre|barriendo|pasa la escoba', 'sweeping the floor, holding a broom, cleaning the house, housekeeping chore'],
+  ['limpia la mesa|limpiando la mesa|limpia el polvo', 'wiping the table with a cloth, cleaning surface, domestic work'],
 
   // -- DEPORTIVO (¡NUEVO!) --
   ['juega futbol|jugando futbol|patea el balon', 'playing soccer, kicking soccer ball, grass field background, dynamic running pose, sweat drops'],
@@ -219,9 +222,9 @@ function isSpanish(text) {
 }
 
 /**
- * Normaliza y mapea los rasgos de la ficha del personaje a tokens validos
+ * Normaliza y mapea los rasgos de la ficha del personaje a tokens validos con pesos explicitos
  */
-export function buildCharacterTokens(characterDetails) {
+export function buildCharacterTokens(characterDetails, characterName = '') {
   if (!characterDetails) return '';
   let tokens = characterDetails.toLowerCase().trim();
   
@@ -230,17 +233,34 @@ export function buildCharacterTokens(characterDetails) {
   
   // Limpieza y normalizacion de comas
   tokens = tokens.replace(/\s+/g, ' ');
-  tokens = tokens.split(',').map(t => t.trim()).filter(t => t.length > 0).join(', ');
+  const traitList = tokens.split(',').map(t => t.trim()).filter(t => t.length > 0);
   
+  // Asignar mayor peso sintáctico a rasgos críticos para evitar que la IA los omita
+  const weightedTraits = traitList.map(trait => {
+    // Si contiene rasgos de pelo o accesorios clave (como gafas), darles más peso
+    if (/\b(hair|glasses|spectacles|eyeglasses|eyes|freckles)\b/i.test(trait)) {
+      return `(${trait}:1.35)`;
+    }
+    return trait;
+  });
+
+  let resultTokens = weightedTraits.join(', ');
+  
+  // Crear un identificador de identidad visual persistente anclado al nombre
+  const identityAnchor = characterName 
+    ? `a manga protagonist named ${characterName.toLowerCase()} with a single consistent appearance` 
+    : '';
+
   // Asegurar etiqueta demografica principal de anime (1girl / 1boy)
-  if (!/\b(1girl|1boy|2girls|2boys|girl|boy)\b/i.test(tokens)) {
-    if (tokens.includes('boy') || tokens.includes('man')) {
-      tokens = '1boy, ' + tokens;
+  if (!/\b(1girl|1boy|2girls|2boys|girl|boy)\b/i.test(resultTokens)) {
+    if (resultTokens.includes('boy') || resultTokens.includes('man')) {
+      resultTokens = '1boy, ' + resultTokens;
     } else {
-      tokens = '1girl, ' + tokens;
+      resultTokens = '1girl, ' + resultTokens;
     }
   }
-  return tokens;
+
+  return identityAnchor ? `${identityAnchor}, ${resultTokens}` : resultTokens;
 }
 
 /**
@@ -279,19 +299,19 @@ export function buildFinalPrompt(options) {
 
   const parts = [];
 
-  // 1. CARACTERISTICAS DEL PERSONAJE (Token de consistencia priorizado)
+  // 1. COMPOSICION Y PERSPECTIVA DEL PANEL (Debe ir primero para establecer la toma)
+  if (panelHint) {
+    parts.push(panelHint);
+  }
+
+  // 2. CARACTERISTICAS DE CONSISTENCIA DEL PERSONAJE (Prioridad alta en el prompt)
   if (characterTokens) {
     parts.push(characterTokens);
   }
 
-  // 2. LA ACCION Y ESCENA TRADUCIDA
+  // 3. LA ACCION Y ESCENA TRADUCIDA (Con peso ligeramente menor implícito al ir después)
   if (scene) {
     parts.push(scene);
-  }
-
-  // 3. COMPOSICION DEL PANEL (close-up, wide shot, etc.)
-  if (panelHint) {
-    parts.push(panelHint);
   }
 
   // 4. SUFIJO DE ESTILO ARTISTICO
@@ -299,8 +319,8 @@ export function buildFinalPrompt(options) {
     parts.push(styleSuffix.replace(/^,\s*/, ''));
   }
 
-  // 5. TOKENS DE CALIDAD Y RENDERIZADO MANGA ESTANDAR
-  parts.push('masterpiece, best quality, sharp linework, clean ink contours, no speech bubbles, no text');
+  // 5. TOKENS DE CALIDAD Y RENDERIZADO MANGA ESTANDAR (Exclusión total de bocadillos/textos)
+  parts.push('masterpiece, best quality, sharp linework, clean ink contours, no speech bubbles, no text, clean layout');
 
   // Retornar prompt final limpio
   return parts.join(', ').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
