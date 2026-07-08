@@ -59,14 +59,16 @@ app.post('/generate', async (req, res) => {
   // Igual al endpoint que usa Alicia — funciona con token READ.
   // Payload: { inputs: "<prompt>", parameters: { ... } }
   async function tryRouterNative(token, model) {
+    const isSchnell = model.id.includes('schnell');
+    const effectiveSteps = isSchnell ? Math.min(steps, 4) : steps;
     const payload = JSON.stringify({
       inputs: prompt,
       parameters: {
         negative_prompt: negativePrompt || '',
         width,
         height,
-        num_inference_steps: steps,
-        guidance_scale: 7.0,
+        num_inference_steps: effectiveSteps,
+        guidance_scale: isSchnell ? 0 : 7.0,
       }
     });
 

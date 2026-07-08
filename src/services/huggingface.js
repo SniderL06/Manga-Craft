@@ -19,7 +19,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   demon_slayer: {
     name: '🌸 Efectos Visuales (Demon Slayer / Kimetsu style)',
@@ -36,7 +36,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   seinen: {
     name: '🖤 Seinen Dark (Berserk / Vagabond style)',
@@ -52,7 +52,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   shojo_modern: {
     name: '✨ Shojo Moderno (Your Lie in April style)',
@@ -68,7 +68,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   isekai: {
     name: '🌀 Isekai / Aventura (Re:Zero / Mushoku Tensei style)',
@@ -84,7 +84,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   webtoon: {
     name: '🎨 Webtoon Color (Solo Leveling / Tower of God style)',
@@ -100,7 +100,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 768, height: 1024,
-    steps: 4
+    steps: 8
   },
   double_page: {
     name: '📖 Página Doble / Splash Page',
@@ -115,7 +115,7 @@ export const STYLE_PRESETS = {
       'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
       'japanese text, callout, overlay text, print text',
     width: 1024, height: 768,
-    steps: 4
+    steps: 8
   }
 };
 
@@ -137,7 +137,7 @@ async function generateWithPollinations(fullPrompt, preset, contentRating = 'gen
   const safeParam = (contentRating === 'mature' || contentRating === 'adult') ? '&safe=false' : '';
   const nsfwParam = contentRating === 'adult' ? '&nologo=true&nofeed=true' : '&nologo=true';
 
-  const url = `https://image.pollinations.ai/prompt/${encodedEnhanced}?width=${width}&height=${height}&model=flux&seed=${finalSeed}${nsfwParam}&enhance=true${safeParam}`;
+  const url = `https://image.pollinations.ai/prompt/${encodedEnhanced}?width=${width}&height=${height}&model=flux-pro&seed=${finalSeed}${nsfwParam}${safeParam}`;
   console.log(`[Pollinations] Generando imagen manga | Rating: ${contentRating} | Seed: ${finalSeed}...`);
 
   const r = await fetch(url, { signal: AbortSignal.timeout(90000) });

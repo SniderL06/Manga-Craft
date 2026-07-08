@@ -234,7 +234,7 @@ function isSpanish(text) {
 }
 
 /**
- * Normaliza y mapea los rasgos de la ficha del personaje a tokens validos con pesos explicitos
+ * Normaliza y mapea los rasgos de la ficha del personaje a tokens validos
  */
 export function buildCharacterTokens(characterDetails, characterName = '') {
   if (!characterDetails) return '';
@@ -245,34 +245,18 @@ export function buildCharacterTokens(characterDetails, characterName = '') {
   
   // Limpieza y normalizacion de comas
   tokens = tokens.replace(/\s+/g, ' ');
-  const traitList = tokens.split(',').map(t => t.trim()).filter(t => t.length > 0);
-  
-  // Asignar mayor peso sintáctico a rasgos críticos para evitar que la IA los omita
-  const weightedTraits = traitList.map(trait => {
-    // Si contiene rasgos de pelo o accesorios clave (como gafas), darles más peso
-    if (/\b(hair|glasses|spectacles|eyeglasses|eyes|freckles)\b/i.test(trait)) {
-      return `(${trait}:1.35)`;
-    }
-    return trait;
-  });
-
-  let resultTokens = weightedTraits.join(', ');
-  
-  // Crear un identificador de identidad visual persistente anclado al nombre
-  const identityAnchor = characterName 
-    ? `a manga protagonist named ${characterName.toLowerCase()} with a single consistent appearance` 
-    : '';
+  tokens = tokens.split(',').map(t => t.trim()).filter(t => t.length > 0).join(', ');
 
   // Asegurar etiqueta demografica principal de anime (1girl / 1boy)
-  if (!/\b(1girl|1boy|2girls|2boys|girl|boy)\b/i.test(resultTokens)) {
-    if (resultTokens.includes('boy') || resultTokens.includes('man')) {
-      resultTokens = '1boy, ' + resultTokens;
+  if (!/\b(1girl|1boy|2girls|2boys|girl|boy)\b/i.test(tokens)) {
+    if (tokens.includes('boy') || tokens.includes('man')) {
+      tokens = '1boy, ' + tokens;
     } else {
-      resultTokens = '1girl, ' + resultTokens;
+      tokens = '1girl, ' + tokens;
     }
   }
 
-  return identityAnchor ? `${identityAnchor}, ${resultTokens}` : resultTokens;
+  return tokens;
 }
 
 export function buildFinalPrompt(options) {
