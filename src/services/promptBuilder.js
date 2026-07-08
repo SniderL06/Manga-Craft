@@ -311,19 +311,19 @@ export function buildFinalPrompt(options) {
 
   const parts = [];
 
-  // 1. COMPOSICION Y PERSPECTIVA DEL PANEL (Debe ir primero para establecer la toma)
-  if (panelHint) {
-    parts.push(panelHint);
-  }
-
-  // 2. CARACTERISTICAS DE CONSISTENCIA DEL PERSONAJE (Prioridad alta en el prompt)
+  // 1. PERSONAJE PRIMERO — FLUX da mayor peso a los primeros tokens
   if (characterTokens) {
     parts.push(characterTokens);
   }
 
-  // 3. LA ACCION Y ESCENA TRADUCIDA (Con peso ligeramente menor implícito al ir después)
+  // 2. ACCION Y ESCENA TRADUCIDA
   if (scene) {
     parts.push(scene);
+  }
+
+  // 3. COMPOSICION DEL PANEL (al final, peso menor)
+  if (panelHint) {
+    parts.push(panelHint);
   }
 
   // 4. SUFIJO DE ESTILO ARTISTICO

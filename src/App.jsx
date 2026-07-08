@@ -564,11 +564,10 @@ function App() {
           const escapedName = char.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
           const regex = new RegExp(`\\b${escapedName}\\b`, 'i');
           if (regex.test(editorPrompt)) {
-            // Convert character's custom traits to standard visual tokens
             const tokens = buildCharacterTokens(char.details, char.name);
             const ageToken = char.age === 'child' ? 'child, small kid, ' : (char.age === 'adult' ? 'mature adult, ' : 'teenager, ');
-            // Append weight and label explicitly with age-stage forced
-            matchingChars.push(`(appearance of ${char.name}: ${ageToken}${tokens})`);
+            // Tokens planos directos — FLUX entiende atributos visuales simples, no instrucciones en paréntesis
+            matchingChars.push(`${ageToken}${tokens}`);
           }
         });
         if (matchingChars.length > 0) {
