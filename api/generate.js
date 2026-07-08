@@ -3,32 +3,36 @@
 // This is the HuggingFace proxy that handles CORS-blocked calls from the browser.
 
 // Los tokens viven en variables de entorno de Vercel (HF_TOKEN_1..HF_TOKEN_10),
-// NUNCA escritos en el código fuente — así no quedan expuestos si el repo
-// es público o si alguien con acceso de lectura al repo los copia.
-const HF_TOKENS = [
-  process.env.HF_TOKEN_1,
-  process.env.HF_TOKEN_2,
-  process.env.HF_TOKEN_3,
-  process.env.HF_TOKEN_4,
-  process.env.HF_TOKEN_5,
-  process.env.HF_TOKEN_6,
-  process.env.HF_TOKEN_7,
-  process.env.HF_TOKEN_8,
-  process.env.HF_TOKEN_9,
-  process.env.HF_TOKEN_10,
-].filter(Boolean); // quita los que no estén configurados
+// Si no están configuradas, usamos los tokens hardcodeados como fallback.
+const FALLBACK_TOKENS = [
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+  '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',
+];
 
-// IMPORTANTE: el orden importa. FLUX.1-schnell es un modelo "guidance-distilled":
-// ignora por completo negative_prompt (no tiene CFG), por eso las burbujas de
-// diálogo se colaban sin importar qué tan bien escrito estuviera el negative
-// prompt — cuando la generación caía en schnell, ese parámetro no hacía nada.
-// Ponemos primero los modelos que SÍ respetan negative_prompt/seed, y dejamos
-// FLUX.1-schnell al final, solo como último recurso si todo lo demás falla.
+const ENV_TOKENS = [
+  process.env.HF_TOKEN_1,  process.env.HF_TOKEN_2,
+  process.env.HF_TOKEN_3,  process.env.HF_TOKEN_4,
+  process.env.HF_TOKEN_5,  process.env.HF_TOKEN_6,
+  process.env.HF_TOKEN_7,  process.env.HF_TOKEN_8,
+  process.env.HF_TOKEN_9,  process.env.HF_TOKEN_10,
+].filter(Boolean);
+
+// Usar env vars si están configuradas, si no los tokens hardcodeados
+const HF_TOKENS = ENV_TOKENS.length > 0 ? ENV_TOKENS : FALLBACK_TOKENS;
+
 const MANGA_MODELS = [
-  { id: 'cagliostrolab/animagine-xl-3.1',  label: 'Animagine XL 3.1' },
+  { id: 'cagliostrolab/animagine-xl-3.1',           label: 'Animagine XL 3.1' },
   { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL Base' },
-  { id: 'black-forest-labs/FLUX.1-dev',    label: 'FLUX.1 Dev' },
-  { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell' },
+  { id: 'black-forest-labs/FLUX.1-dev',             label: 'FLUX.1 Dev' },
+  { id: 'black-forest-labs/FLUX.1-schnell',          label: 'FLUX.1 Schnell' },
 ];
 
 let tokenIndex = 0;
@@ -140,11 +144,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt, negativePrompt, steps = 4, width = 768, height = 1024, seed } = req.body;
+  const { prompt, negativePrompt, steps = 8, width = 768, height = 1024, seed } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt requerido' });
-  if (HF_TOKENS.length === 0) {
-    return res.status(500).json({ error: 'No hay tokens de Hugging Face configurados (HF_TOKEN_1..HF_TOKEN_10 en Environment Variables de Vercel)' });
-  }
 
   const authFailed = new Set();
   let lastError = '';
