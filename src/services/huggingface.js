@@ -124,21 +124,28 @@ const PROXY_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001';
 
 // ── Pollinations.ai — fallback CORS-friendly, sin clave ──────────────────────
 async function generateWithPollinations(fullPrompt, preset, contentRating = 'general', seed = null) {
-  // Usamos el seed determinístico si viene (consistencia de personaje);
-  // si no, uno aleatorio como antes.
   const finalSeed = (typeof seed === 'number' && !Number.isNaN(seed)) ? seed : Math.floor(Math.random() * 999999);
   const { width = 768, height = 1024, negativePrompt = '' } = preset;
 
-  // Añadimos el negative prompt de manera descriptiva
-  const enhancedPrompt = `${fullPrompt}, avoiding: [${negativePrompt}]`;
-  const encodedEnhanced = encodeURIComponent(enhancedPrompt);
+  // Limitar el prompt a 800 caracteres para no exceder los límites de URL de Pollinations
+  // (Un URL con encode puede triplicar el tamaño en bytes)
+  const trimmedPrompt = fullPrompt.length > 800
+    ? fullPrompt.slice(0, 797) + '...'
+    : fullPrompt;
+
+  // Negative prompt corto (Pollinations lo acepta como param separado, máx 300 chars)
+  const shortNegative = negativePrompt.slice(0, 300);
+
+  const encodedPrompt   = encodeURIComponent(trimmedPrompt);
+  const encodedNegative = encodeURIComponent(shortNegative);
 
   // Aplicar safe=false para contenido maduro o adulto
-  const safeParam = (contentRating === 'mature' || contentRating === 'adult') ? '&safe=false' : '';
-  const nsfwParam = contentRating === 'adult' ? '&nologo=true&nofeed=true' : '&nologo=true';
+  const safeParam  = (contentRating === 'mature' || contentRating === 'adult') ? '&safe=false' : '';
+  const nsfwParam  = contentRating === 'adult' ? '&nologo=true&nofeed=true' : '&nologo=true';
+  const negParam   = shortNegative ? `&negative=${encodedNegative}` : '';
 
-  const url = `https://image.pollinations.ai/prompt/${encodedEnhanced}?width=${width}&height=${height}&model=flux-pro&seed=${finalSeed}${nsfwParam}${safeParam}`;
-  console.log(`[Pollinations] Generando imagen manga | Rating: ${contentRating} | Seed: ${finalSeed}...`);
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=flux&seed=${finalSeed}${negParam}${nsfwParam}${safeParam}`;
+  console.log(`[Pollinations] Rating: ${contentRating} | Seed: ${finalSeed} | Chars: ${trimmedPrompt.length}`);
 
   const r = await fetch(url, { signal: AbortSignal.timeout(90000) });
   if (!r.ok) throw new Error(`Pollinations HTTP ${r.status}`);
