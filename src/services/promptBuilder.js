@@ -103,8 +103,8 @@ const SCENE_MAP = [
   ['con una pistola en la mano|con una pistola|sostiene una pistola|apunta con una pistola', 'holding a handgun, pistol in hand, aiming gun at target, trigger finger, dramatic shading, weapon closeup, victim in background'],
   ['amenaza con un cuchillo|amenaza con cuchillo|sostiene un cuchillo', 'holding a knife, brandishing a blade, shiny dagger in hand, threatening gesture near another character, dark alley crime, suspense'],
   ['apunta con el arma|apunta a|le apunta', 'aiming a firearm at a victim, targeting with a gun, focused eye, barrel close-up, dramatic action shot, two characters'],
-  ['apuñala a por la espalda|apuñala por la espalda a|apuñalando por la espalda a|apuñala por la espalda|apuñala a', 'stabbing from behind, character driving a knife into another character\'s back, holding a dagger, betrayal, physical combat impact, shock expression, dark manga action, blood splatter'],
-  ['apuñala|apuñalando|le clava un cuchillo|le clava la daga', 'stabbing attack, thrusting a knife, holding a dagger, physical impact, dynamic action pose, intense combat, blood splatter, gritty dramatic manga'],
+  ['apuñala por la espalda|apuñala a por la espalda|apuñalar por la espalda|apuñalando por la espalda', 'knife stabbing from behind, character driving a dagger into another character\'s back, backstab betrayal, combat impact, extreme pain shock expression, blood spray, dramatic seinen manga'],
+  ['apuñala|apuñalar|apuñalando|apuñalo|le clava un cuchillo|le clava la daga', 'knife stabbing attack, thrusting a dagger into victim\'s torso, physical impact, holding a knife, dynamic confrontation, blood splatter, gritty dramatic action manga panel'],
   // Efectos de impacto y ambiente de pelea / GORE y Violencia Extrema (¡NUEVO!)
   ['sangra por la cabeza|sangrando de la cabeza|cabeza sangrando', 'bleeding from head, blood trickling down face, head wound, combat damage, dramatic pain expression, gore, blood splatter'],
   ['le corta el brazo|pierde un brazo|brazo cortado|corta el brazo a', 'severed arm, cutting off arm, arm flying off, dramatic blood spray, battle injury, severe wound, blood splatter, dark seinen combat'],
@@ -275,9 +275,6 @@ export function buildCharacterTokens(characterDetails, characterName = '') {
   return identityAnchor ? `${identityAnchor}, ${resultTokens}` : resultTokens;
 }
 
-/**
- * Genera el prompt final optimizado para el generador de imagenes
- */
 export function buildFinalPrompt(options) {
   const {
     sceneDescription,
@@ -285,29 +282,48 @@ export function buildFinalPrompt(options) {
     panelHint,
     styleSuffix,
     styleKey,
-    characterNames = [] // Nombres dinamicos de los personajes a limpiar
+    characterNames = [] // Nombres dinamicos de los personajes
   } = options;
 
   let scene = sceneDescription || '';
+
+  // 1. Extraer y procesar personajes explícitamente marcados con corchetes [Nombre]
+  const explicitBracketsRegex = /\[(.*?)\]/g;
+  let matches;
+  const explicitNamesInScene = [];
   
+  while ((matches = explicitBracketsRegex.exec(scene)) !== null) {
+    if (matches[1]) {
+      explicitNamesInScene.push(matches[1].trim().toLowerCase());
+    }
+  }
+
+  // Limpiar los corchetes para la traducción (convertir "[Gal] apuñala" a "Gal apuñala" momentáneamente)
+  scene = scene.replace(/\[(.*?)\]/g, '$1');
+
   // Traducir escena del espanol al ingles visual si se detecta espanol
   if (isSpanish(scene)) {
     scene = applyMap(scene, SCENE_MAP);
     
-    // Limpieza de nombres de personajes predeterminados y dinamicos de la escena traducida
-    const allNames = [...new Set([
+    // Lista de todos los nombres posibles a limpiar
+    const allNamesToClean = [...new Set([
       'mariam', 'arizu', 'zari', 'akira', 'kaito', 'yuki', 'sakura', 'hiro', 'ren', 'miku',
-      ...characterNames.map(n => n.toLowerCase())
+      ...characterNames.map(n => n.toLowerCase()),
+      ...explicitNamesInScene
     ])];
     
     // Escapar caracteres especiales en los nombres para evitar romper la RegExp
-    const cleanPattern = '\\b(' + allNames.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|') + ')\\b';
+    const cleanPattern = '\\b(' + allNamesToClean.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|') + ')\\b';
     const nameRegex = new RegExp(cleanPattern, 'gi');
     scene = scene.replace(nameRegex, '').trim();
     
-    // Quitar comas huerfanas al inicio/fin
+    // Quitar comas huerfanas al inicio/fin y conectores sueltos que puedan quedar del español
     scene = scene.replace(/^\s*,\s*|\s*,\s*$/, '').trim();
   }
+  
+  // Limpieza adicional de preposiciones en español que hayan quedado flotando sin los nombres
+  scene = scene.replace(/\b(a por la espalda|por la espalda a|a Manolo|a Gal|a)\b/gi, '').trim();
+  scene = scene.replace(/^\s*,\s*|\s*,\s*$/, '').trim();
 
   const parts = [];
 

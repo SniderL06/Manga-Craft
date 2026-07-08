@@ -542,10 +542,9 @@ function App() {
 
   const handleInsertCharacterToPrompt = (char) => {
     setEditorPrompt(prev => {
-      const ageToken = char.age === 'child' ? 'child, ' : (char.age === 'adult' ? 'adult, ' : 'teenager, ');
-      const traitStr = `${char.name} (${ageToken}${char.details})`;
-      if (!prev) return traitStr + ", ";
-      return prev + (prev.endsWith(', ') ? '' : ', ') + traitStr + ", ";
+      const tag = `[${char.name}]`;
+      if (!prev) return tag;
+      return prev + (prev.endsWith(' ') ? '' : ' ') + tag;
     });
   };
 
@@ -1367,16 +1366,48 @@ function App() {
                   )}
                 </div>
 
-                <div className="form-group">
-                  <label>Prompt de Ilustración (Detalla la escena)</label>
+                 <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ margin: 0 }}>Prompt de Ilustración (Detalla la escena)</label>
+                    {currentProject.characters && currentProject.characters.length > 0 && (
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Insertar:</span>
+                        {currentProject.characters.map(char => (
+                          <button
+                            key={char.id}
+                            type="button"
+                            onClick={() => {
+                              setEditorPrompt(prev => {
+                                const insertText = `[${char.name}]`;
+                                return prev ? `${prev} ${insertText}` : insertText;
+                              });
+                            }}
+                            style={{
+                              background: 'rgba(0, 240, 255, 0.12)',
+                              border: '1px solid rgba(0, 240, 255, 0.3)',
+                              color: '#00f0ff',
+                              borderRadius: '4px',
+                              padding: '2px 8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                            title={`Insertar etiqueta segura para ${char.name}`}
+                          >
+                            +{char.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <textarea 
                     rows={4}
-                    placeholder="Describe la viñeta..."
+                    placeholder="Ejemplo: [Gal] apuñala a [Manolo] por la espalda"
                     value={editorPrompt}
                     onChange={(e) => setEditorPrompt(e.target.value)}
                   />
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    💡 Si escribes el nombre de un personaje (ej: Mariam), se inyectarán sus rasgos para mantener la consistencia.
+                    💡 <strong>TIP definitivo:</strong> Usa corchetes para los personajes, ejemplo: <code>[Gal]</code>. Así la IA aplicará sus rasgos con total precisión sin confundir la traducción de la acción.
                   </span>
                 </div>
 
