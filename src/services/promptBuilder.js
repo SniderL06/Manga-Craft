@@ -120,6 +120,9 @@ const SCENE_MAP = [
   ['sangra|esta sangrando|herido', 'bleeding wound, torn clothing, dramatic injury, pain expression, battle damage'],
   ['le golpean|golpean|le pegan|golpeando|le golpea|le pega', 'close-up shot focused on the little child crying on the floor in fear, bruised cheeks, covering his face with hands, while the dark shadow of an angry parent looms over him in the background, high contrast dramatic manga scene, emotional distress, speed lines of impact'],
   ['maltrato|abuso familiar|abuso domestico', 'close-up of a sad little child crying on the dark room floor, dark room, towering shadow of an angry adult in the background, emotional distress, dark dramatic manga panel, high contrast shadows'],
+  ['posicion fetal|en posicion fetal|currucado', 'lying curled up in fetal position on bed, knees pulled to chest, hugging knees, looking depressed and exhausted, sleeping in bed, vulnerable pose'],
+  ['gritandole a|gritando a|le grita|grita a', 'shouting angrily at the other character, screaming in rage, furious expression, dynamic yelling pose, pointing aggressively at the scared character, dramatic confrontation, two characters'],
+  ['acostado en la cama con los ojos cerrados|ojos cerrados en la cama', 'lying in bed, eyes closed, resting head on white pillow, sleeping, tired peaceful face'],
   ['cae derrotado|cae vencido|es derribado', 'defeated falling, knocked down dramatically, lying on ground, exhausted expression'],
   ['energia especial|poder especial|lanza un ataque de energia', 'energy blast attack, glowing power aura, charging energy, dramatic power effect, light rays'],
   ['con su espada|blandiendo la espada|ataca con la espada', 'sword attack, slashing with blade, sword drawn, battle stance, gleaming sword'],
@@ -194,6 +197,8 @@ const TRAIT_MAP = [
   ['dos coletas', 'twin tails hair'],
   ['trenzas', 'braided hair'],
   ['flequillo', 'bangs hair'],
+  ['cabello liso|pelo liso|cabello lacio|pelo lacio', 'smooth straight hair, neat flat hair style'],
+  ['peinado de estudiante|cabello ordenado', 'neat student haircut, clean cut hair, straight flat hair'],
   // Ojos y rostro
   ['ojos azules', 'blue eyes'],
   ['ojos verdes', 'green eyes'],
