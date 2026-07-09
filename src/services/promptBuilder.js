@@ -118,6 +118,8 @@ const SCENE_MAP = [
   ['tiroteo|pelea con armas|intercambio de disparos', 'gunfight showdown, shootout, muzzle flashes, bullets flying, combat cover, intense gun battle, smoke and sparks'],
   ['hay una explosion|explota|explosion', 'explosion background, debris flying, fire and smoke, intense chaos, dramatic impact'],
   ['sangra|esta sangrando|herido', 'bleeding wound, torn clothing, dramatic injury, pain expression, battle damage'],
+  ['le golpean|golpean|le pegan|golpeando|le golpea|le pega', 'getting hit, physical abuse scene, being beaten, physical impact sparks, crying in pain, angry aggressive parents hitting a child, dramatic domestic conflict, shadows of abuse, emotional and physical pain'],
+  ['maltrato|abuso familiar|abuso domestico', 'abusive environment, sad child crying on the floor, shadows of angry parents towering over him, dark somber dramatic manga, high contrast shadows'],
   ['cae derrotado|cae vencido|es derribado', 'defeated falling, knocked down dramatically, lying on ground, exhausted expression'],
   ['energia especial|poder especial|lanza un ataque de energia', 'energy blast attack, glowing power aura, charging energy, dramatic power effect, light rays'],
   ['con su espada|blandiendo la espada|ataca con la espada', 'sword attack, slashing with blade, sword drawn, battle stance, gleaming sword'],

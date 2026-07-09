@@ -36,6 +36,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Style selects and options for proper dark theme contrast */
+select, option {
+  background-color: #12121e !important;
+  color: #f3f3f6 !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
