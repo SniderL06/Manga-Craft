@@ -158,6 +158,14 @@ const SCENE_MAP = [
   ['barre|barriendo|pasa la escoba', 'sweeping the floor, holding a broom, cleaning the house, housekeeping chore'],
   ['limpia la mesa|limpiando la mesa|limpia el polvo', 'wiping the table with a cloth, cleaning surface, domestic work'],
 
+  // -- ROPA Y VESTIMENTA (¡NUEVO!) --
+  ['con pijama|en pijama|vistiendo pijama|lleva pijama', 'wearing comfortable pajamas, sleeping clothes, cozy nightwear'],
+  ['con ropa casual|vestido con ropa casual|ropa de civil|ropa de calle', 'wearing casual clothing, everyday clothes, street style outfit, t-shirt and jeans'],
+  ['con bañador|en bañador|traje de baño|en la playa vistiendo bañador', 'wearing swimwear, bathing suit, beach outfit, summer wear'],
+  ['con chaqueta|lleva una chaqueta|abrigo|sueter', 'wearing a warm jacket, winter coat, cozy sweater outfit'],
+  ['con ropa deportiva|con uniforme deportivo', 'wearing athletic sportswear, gym clothes, track suit, sporty outfit'],
+  ['sin camisa|torso desnudo', 'shirtless, bare chest, no shirt, athletic build torso'],
+
   // -- DEPORTIVO (¡NUEVO!) --
   ['juega futbol|jugando futbol|patea el balon', 'playing soccer, kicking soccer ball, grass field background, dynamic running pose, sweat drops'],
   ['baloncesto|juega basquetbol|lanza al aro', 'playing basketball, shooting a basketball hoop, indoor gym court, jump shot, dynamic pose'],
@@ -332,7 +340,12 @@ export function buildFinalPrompt(options) {
   }
 
   // 5. TOKENS DE CALIDAD Y RENDERIZADO MANGA ESTANDAR (Exclusión total de bocadillos/textos)
-  parts.push('masterpiece, best quality, sharp linework, clean ink contours, no speech bubbles, no text, clean layout');
+  parts.push(
+    'masterpiece, best quality, sharp linework, clean ink contours, ' +
+    'no speech bubbles, no text, no written text, no japanese text, ' +
+    'no kanji, no hiragana, no katakana, no asian characters, ' +
+    'no chalkboard writing, no background text, text-free image, clean layout'
+  );
 
   // Retornar prompt final limpio
   return parts.join(', ').replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();

@@ -560,13 +560,26 @@ function App() {
       let characterTokens = '';
       if (autoInjectTraits && currentProject.characters && currentProject.characters.length > 0) {
         const matchingChars = [];
+        
+        // Detectar si el usuario está especificando un cambio de vestimenta en este panel específico
+        const isSpecifyingDifferentOutfit = /\b(pijama|casual|vestido|traje|ropa de calle|civil|deporte|bañador|camiseta|abrigo|chaqueta|suéter|sweater|jacket|coat|swimsuit|pajama|casual clothing|shirtless|naked|underwear)\b/i.test(editorPrompt);
+
         currentProject.characters.forEach(char => {
           const escapedName = char.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
           const regex = new RegExp(`\\b${escapedName}\\b`, 'i');
           if (regex.test(editorPrompt)) {
-            const tokens = buildCharacterTokens(char.details, char.name);
+            let tokens = buildCharacterTokens(char.details, char.name);
+            
+            // Si el prompt define otra ropa, removemos tokens relacionados con uniforme escolar
+            if (isSpecifyingDifferentOutfit) {
+              tokens = tokens
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => !/\b(school uniform|blazer|uniform|gakuran|sailor uniform|school tie|school dress)\b/i.test(t))
+                .join(', ');
+            }
+
             const ageToken = char.age === 'child' ? 'child, small kid, ' : (char.age === 'adult' ? 'mature adult, ' : 'teenager, ');
-            // Tokens planos directos — FLUX entiende atributos visuales simples, no instrucciones en paréntesis
             matchingChars.push(`${ageToken}${tokens}`);
           }
         });

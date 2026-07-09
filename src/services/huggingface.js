@@ -15,9 +15,14 @@ export const STYLE_PRESETS = {
     negativePrompt:
       'color, blurry, low quality, deformed anatomy, bad hands, extra fingers, ' +
       'poorly drawn face, amateur, sketch, rough lines, western comic, chibi, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -32,9 +37,14 @@ export const STYLE_PRESETS = {
     negativePrompt:
       'color, western comic, poorly drawn, bad anatomy, blurry, low quality, ' +
       'deformed, rough sketch, amateur, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -48,9 +58,14 @@ export const STYLE_PRESETS = {
       'no speech bubbles, no dialogue, no word balloons, clean page without text, no subtitles, no words',
     negativePrompt:
       'color, anime, chibi, cute, simple lines, amateur, blurry, low quality, bad anatomy, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -64,9 +79,14 @@ export const STYLE_PRESETS = {
       'no speech bubbles, no dialogue, no word balloons, clean page without text, no subtitles, no words',
     negativePrompt:
       'color, rough, action, violence, bad anatomy, deformed eyes, blurry, western comic, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -80,9 +100,14 @@ export const STYLE_PRESETS = {
       'no speech bubbles, no dialogue, no word balloons, clean page without text, no subtitles, no words',
     negativePrompt:
       'color, western comic, badly drawn, deformed, blurry, amateur sketch, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -96,9 +121,14 @@ export const STYLE_PRESETS = {
       'no speech bubbles, no dialogue, no word balloons, clean page without text, no subtitles, no words',
     negativePrompt:
       'black and white, monochrome, rough sketch, blurry, bad anatomy, amateur, low quality, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 768, height: 1024,
     steps: 8
   },
@@ -111,9 +141,14 @@ export const STYLE_PRESETS = {
       'no speech bubbles, no dialogue, no word balloons, clean page without text, no subtitles, no words',
     negativePrompt:
       'color, simple, low detail, amateur, blurry, small panel, bad anatomy, ' +
-      'text, watermark, signature, speech bubble, dialog box, speech bubble placeholder, ' +
-      'dialogue bubble, text box, letters, fonts, subtitles, japanese characters, translation, ' +
-      'japanese text, callout, overlay text, print text',
+      'text, any text, written text, handwriting, printed text, ' +
+      'watermark, signature, speech bubble, dialog box, thought bubble, ' +
+      'dialogue bubble, text box, letters, fonts, subtitles, ' +
+      'japanese text, japanese characters, japanese writing, ' +
+      'kanji, hiragana, katakana, kanji characters, ' +
+      'chinese characters, korean text, asian script, asian characters, ' +
+      'chalkboard text, board text, background text, sign text, ' +
+      'callout, overlay text, print text, caption, label',
     width: 1024, height: 768,
     steps: 8
   }
