@@ -564,6 +564,9 @@ function App() {
         // Detectar si el usuario está especificando un cambio de vestimenta en este panel específico
         const isSpecifyingDifferentOutfit = /\b(pijama|casual|vestido|traje|ropa de calle|civil|deporte|bañador|camiseta|abrigo|chaqueta|suéter|sweater|jacket|coat|swimsuit|pajama|casual clothing|shirtless|naked|underwear)\b/i.test(editorPrompt);
 
+        // Detectar si el usuario especifica otra edad (ej. "de niño", "pequeño", "bebe", "adulto")
+        const isSpecifyingDifferentAge = /\b(niño|niña|pequeño|pequeña|chico|chica|bebe|bebé|adulto|anciano|kid|child|baby|infant|toddler|adult|old)\b/i.test(editorPrompt);
+
         currentProject.characters.forEach(char => {
           const escapedName = char.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
           const regex = new RegExp(`\\b${escapedName}\\b`, 'i');
@@ -579,7 +582,10 @@ function App() {
                 .join(', ');
             }
 
-            const ageToken = char.age === 'child' ? 'child, small kid, ' : (char.age === 'adult' ? 'mature adult, ' : 'teenager, ');
+            const ageToken = isSpecifyingDifferentAge 
+              ? '' 
+              : (char.age === 'child' ? 'child, small kid, ' : (char.age === 'adult' ? 'mature adult, ' : 'teenager, '));
+            
             matchingChars.push(`${ageToken}${tokens}`);
           }
         });
