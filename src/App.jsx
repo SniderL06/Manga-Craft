@@ -24,7 +24,7 @@ import {
   Target
 } from 'lucide-react';
 import { StorageService } from './services/storage';
-import { HuggingFaceService, STYLE_PRESETS } from './services/huggingface';
+import { HuggingFaceService, STYLE_PRESETS, applyContentRating } from './services/huggingface';
 import { AuthService, MangaService } from './services/supabase';
 import { PANEL_LAYOUTS, createPage, upgradeLegacyPage, getPanelHint } from './services/panels';
 import { buildCharacterTokens, buildFinalPrompt } from './services/promptBuilder';
@@ -600,8 +600,10 @@ function App() {
       const layoutKey = activePage?.layoutKey || 'three_classic';
       const panelHint = getPanelHint(layoutKey, activePanelIndex);
 
-      // 3. Resolve preset style parameters
-      const preset = STYLE_PRESETS[editorStyle] || STYLE_PRESETS.modern_shonen;
+      // 3. Resolve preset style parameters — apply content rating so violence/gore tokens
+      // reach the POSITIVE prompt via buildFinalPrompt (not just the HF proxy call)
+      const basePreset = STYLE_PRESETS[editorStyle] || STYLE_PRESETS.modern_shonen;
+      const preset = applyContentRating(basePreset, contentRating);
 
       // 4. Build final highly descriptive, weighted English prompt
       const finalPrompt = buildFinalPrompt({

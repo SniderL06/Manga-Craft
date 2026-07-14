@@ -230,7 +230,7 @@ async function isProxyAvailable() {
 }
 
 // ── Modificar preset según el rating de contenido ─────────────────────────────
-function applyContentRating(preset, contentRating) {
+export function applyContentRating(preset, contentRating) {
   if (contentRating === 'general') return preset;
 
   // Para contenido maduro/gore: eliminar absolutamente todo bloqueo de violencia, sangre o muerte
@@ -242,10 +242,19 @@ function applyContentRating(preset, contentRating) {
   adjustedNegative = adjustedNegative.replace(/^,\s*|,\s*$/, '').trim();
 
   if (contentRating === 'mature') {
+    // Negativo: además de quitar bloqueos de violencia, también quitar speech bubbles
+    // para que el modelo no los añada en escenas de pelea
+    const matureNegative = adjustedNegative; // speech bubbles ya están en el negativo base
+
     return {
       ...preset,
-      negativePrompt: adjustedNegative,
-      promptSuffix: preset.promptSuffix + ', dark dramatic manga, violence and action combat allowed, detailed blood splatters, wounds visible, gritty realism'
+      negativePrompt: matureNegative,
+      // Sufijo mucho más específico: tokens de combate, golpes y sangre que entienden los modelos manga
+      promptSuffix: (preset.promptSuffix || '') +
+        ', action manga panel, dynamic fight scene, close-range combat, punching, kicking, ' +
+        'physical impact, hit, strike, punch connecting, blood splatter, bruises, torn clothes, ' +
+        'pain expression, battle damage, manga action lines, dramatic pose, gritty realism, ' +
+        'intense violence, no speech bubbles, no dialogue bubbles'
     };
   }
 
