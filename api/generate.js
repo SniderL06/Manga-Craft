@@ -28,6 +28,11 @@ const ENV_TOKENS = [
 // Usar env vars si están configuradas, si no los tokens hardcodeados
 const HF_TOKENS = ENV_TOKENS.length > 0 ? ENV_TOKENS : FALLBACK_TOKENS;
 
+// ── AI Horde config ──────────────────────────────────────────────────────────
+const AI_HORDE_KEY = process.env.AI_HORDE_KEY || '0000000000';
+const AI_HORDE_CLIENT = 'MangaCraft:1.0:anonymous';
+const AI_HORDE_MODELS = ['Animagine XL 3.1', 'Anything V5'];
+
 const MANGA_MODELS = [
   { id: 'cagliostrolab/animagine-xl-3.1',           label: 'Animagine XL 3.1' },
   { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL Base' },
@@ -40,6 +45,91 @@ function nextToken() {
   const t = HF_TOKENS[tokenIndex % HF_TOKENS.length];
   tokenIndex++;
   return t;
+}
+
+async function tryAIHorde(prompt, negativePrompt, width, height, contentRating) {
+  const isNSFW = contentRating === 'adult';
+  const w = Math.min(Math.round(width / 64) * 64, 1024);
+  const h = Math.min(Math.round(height / 64) * 64, 1024);
+  const fullPrompt = negativePrompt ? `${prompt} ### ${negativePrompt}` : prompt;
+
+  const submitRes = await fetch('https://aihorde.net/api/v2/generate/async', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': AI_HORDE_KEY,
+      'Client-Agent': AI_HORDE_CLIENT,
+    },
+    body: JSON.stringify({
+      prompt: fullPrompt,
+      params: {
+        width: w,
+        height: h,
+        steps: 20,
+        sampler_name: 'k_euler_a',
+        cfg_scale: 7.0,
+        n: 1,
+        hires_fix: false,
+        clip_skip: 2,
+      },
+      models: AI_HORDE_MODELS,
+      nsfw: isNSFW,
+      r2: false,
+      shared: false,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!submitRes.ok) {
+    const errText = await submitRes.text().catch(() => '');
+    throw new Error(`AI Horde submit HTTP ${submitRes.status}: ${errText.slice(0, 100)}`);
+  }
+
+  const submitData = await submitRes.json();
+  const jobId = submitData.id;
+  if (!jobId) throw new Error('AI Horde no devolvió job ID');
+
+  const MAX_WAIT_MS = 60000;
+  const POLL_MS = 4000;
+  const deadline = Date.now() + MAX_WAIT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+    let checkData;
+    try {
+      const checkRes = await fetch(`https://aihorde.net/api/v2/generate/check/${jobId}`, {
+        headers: { apikey: AI_HORDE_KEY, 'Client-Agent': AI_HORDE_CLIENT },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!checkRes.ok) continue;
+      checkData = await checkRes.json();
+    } catch {
+      continue;
+    }
+
+    if (checkData.faulted) throw new Error('AI Horde worker faulted');
+    if (checkData.is_possible === false) throw new Error('No workers available for models');
+
+    if (checkData.done) {
+      const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${jobId}`, {
+        headers: { apikey: AI_HORDE_KEY, 'Client-Agent': AI_HORDE_CLIENT },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!statusRes.ok) throw new Error(`AI Horde status HTTP ${statusRes.status}`);
+
+      const status = await statusRes.json();
+      const gen = status.generations?.[0];
+      if (!gen?.img) throw new Error('No image in status');
+
+      const imgData = gen.img.startsWith('data:')
+        ? gen.img
+        : `data:image/webp;base64,${gen.img}`;
+
+      return { image: imgData, model: `AI Horde / ${gen.model}`, strategy: 'ai-horde' };
+    }
+  }
+
+  throw new Error('AI Horde: timeout');
 }
 
 async function tryRouterNative(token, model, prompt, negativePrompt, width, height, steps, seed) {
@@ -144,11 +234,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt, negativePrompt, steps = 8, width = 768, height = 1024, seed } = req.body;
+  const { prompt, negativePrompt, steps = 8, width = 768, height = 1024, contentRating = 'general', seed } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt requerido' });
 
   const authFailed = new Set();
   let lastError = '';
+
+  // Strategy 1: AI Horde (gratis, especializada en anime)
+  try {
+    const hordeResult = await tryAIHorde(prompt, negativePrompt, width, height, contentRating);
+    if (hordeResult) return res.status(200).json(hordeResult);
+  } catch (e) {
+    lastError = e.message;
+  }
 
   // Strategy A: router.huggingface.co
   for (const model of MANGA_MODELS) {
